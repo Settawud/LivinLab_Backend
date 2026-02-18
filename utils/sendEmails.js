@@ -23,7 +23,7 @@ const sendEmail = async (to, subject, html) => {
     console.log("Email sent successfully to", to);
   } catch (error) {
     console.error("Error sending email:", error);
-    // In a real app, you might want to throw the error to be handled by the caller
+    // Don't throw error to prevent server crash
   }
 };
 

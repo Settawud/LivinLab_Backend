@@ -297,7 +297,7 @@ const verifyResetToken = (token, user) => {
 export const passwordForgot = async (req, res, next) => {
   try {
     const email = String(req.body?.email || "").toLowerCase();
-    const user = await User.findOne({ email }).select("password sessionsVersion");
+    const user = await User.findOne({ email }).select("email password sessionsVersion");
 
     // To avoid user enumeration, always respond with success, but only send email if user exists.
     if (user) {
