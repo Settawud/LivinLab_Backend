@@ -1,0 +1,84 @@
+@base = http://localhost:4000
+@ts = {{$timestamp}}
+# backendGroup7/rest/orders.rest
+
+### Login user
+# @name login
+POST {{base}}/api/v1/mongo/auth/login
+# ================= Variables =================
+# ⚠️ เปลี่ยนค่าตัวแปรให้ตรงกับข้อมูลของคุณ
+#
+# @token: Bearer token ของผู้ใช้ที่เป็นเจ้าของ Order
+# @orderId: ID ของ Order ที่ต้องการทดสอบ (หาได้จากฐานข้อมูล MongoDB)
+#
+@baseUrl = http://localhost:4000/api/v1/mongo
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Njg1YjU2YjQyZjQxY2Q3OTY4YjI5M2MiLCJlbWFpbCI6Im5ldy11c2VyLTFAZXhhbXBsZS5jb20iLCJuYW1lIjoiSm9obiBEb2UiLCJyb2xlIjoidXNlciIsInN2IjowLCJpYXQiOjE3MTk5MDk3NDAsImV4cCI6MTcyMDUxNDU0MH0.V1_f5h-s-g-g-g-g-g-g-g-g-g-g-g-g-g-g-g-g
+@orderId = 6685b5a042f41cd7968b294a
+
+###
+# [SUCCESS] อัปเดตสถานะการจัดส่งของ Order
+#
+# อัปเดตที่อยู่, tracking number, และเปลี่ยนสถานะเป็น "Shipped"
+# เซิร์ฟเวอร์จะตั้งค่า `shippedAt` และ `orderStatus` ให้ตรงกันโดยอัตโนมัติ
+PATCH {{baseUrl}}/orders/68c9ac0b414f634cbbfbd4dd/shipping
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGM1ZDNiMTk1MTY3ZGExNTY5NzdmMTEiLCJlbWFpbCI6ImJlc3RAYmVzdC5jb20iLCJuYW1lIjoiYmVzdCBiZXN0Iiwicm9sZSI6InVzZXIiLCJzdiI6MywiaWF0IjoxNzU3OTI4MjM3LCJleHAiOjE3NTg1MzMwMzd9.U-KAz2Y0BoWGJ9IH93ht5aLQmYrKw-ruDNWGN3ahiaA
+
+{
+  
+  "deliveryStatus": "Shipped"
+}
+
+###
+@token = {{login.response.body.token}}
+
+### Orders: list
+GET {{base}}/api/v1/mongo/orders
+# [SUCCESS] อัปเดตสถานะเป็น "จัดส่งสำเร็จ" (Delivered)
+#
+# เซิร์ฟเวอร์จะตั้งค่า `deliveredAt` และ `orderStatus` ให้ตรงกัน
+###
+PATCH {{baseUrl}}/orders/68c9ac0b414f634cbbfbd4dd/shipping
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGM1ZDNiMTk1MTY3ZGExNTY5NzdmMTEiLCJlbWFpbCI6ImJlc3RAYmVzdC5jb20iLCJuYW1lIjoiYmVzdCBiZXN0Iiwicm9sZSI6InVzZXIiLCJzdiI6MywiaWF0IjoxNzU3OTI4MjM3LCJleHAiOjE3NTg1MzMwMzd9.U-KAz2Y0BoWGJ9IH93ht5aLQmYrKw-ruDNWGN3ahiaA
+
+{
+  "deliveryStatus": "Delivered"
+}
+
+### Orders: create from cart (optional discountCode)
+POST {{base}}/api/v1/mongo/orders
+{
+  "deliveryStatus": "Delivered"
+}
+
+###
+# [FAIL] พยายามอัปเดตด้วยสถานะที่ไม่ถูกต้อง
+#
+# คาดหวัง HTTP 400 Bad Request
+PATCH {{baseUrl}}/orders/{{orderId}}/shipping
+Content-Type: application/json
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{  "name": "test",
+  "phone": "0999999999"
+  "discountCode": "",
+  "shipping": 
+  { "address": "123 Test Rd" }
+  "deliveryStatus": "Returning"
+}
+
+### Orders: list again
+GET {{base}}/api/v1/mongo/orders
+###
+# [FAIL] พยายามอัปเดต Order ID ที่ไม่มีอยู่จริง
+#
+# คาดหวัง HTTP 404 Not Found
+PATCH {{baseUrl}}/orders/6153a0b4c3a5e6a8b3c4d5e6/shipping
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "deliveryStatus": "Shipped"
+}

@@ -1,0 +1,4 @@
+@base = http://localhost:4000
+
+### Health
+GET {{base}}/health/db

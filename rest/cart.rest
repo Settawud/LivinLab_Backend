@@ -1,0 +1,47 @@
+@base = http://localhost:4000
+@ts = {{$timestamp}}
+//  "email": "ada.1757532442@example.com",
+### Login user
+# @name login
+POST {{base}}/api/v1/mongo/auth/login
+Content-Type: application/json
+
+{
+  "email": "ada.1757649351@example.com",
+  "password": "secret123"
+}
+
+###
+@token = {{login.response.body.token}}
+
+### Set the product/variant you want to add
+@productId = 68c39606f0b03d45526fd1cb
+@variantId = 68c39606f0b03d45526fd1cd
+
+### Cart: get
+GET {{base}}/api/v1/mongo/cart
+Authorization: Bearer {{token}}
+
+### Cart: add item
+POST {{base}}/api/v1/mongo/cart/items
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": "{{productId}}",
+  "variantId": "{{variantId}}",
+  "quantity": 2
+}
+
+### Cart: update item quantity
+PATCH {{base}}/api/v1/mongo/cart/items/{{productId}}/{{variantId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": 2
+}
+
+### Cart: remove item
+DELETE {{base}}/api/v1/mongo/cart/items/{{productId}}/{{variantId}}
+Authorization: Bearer {{token}}

@@ -1,0 +1,12 @@
+{
+    "cSpell.ignoreWords": [
+        "เวลา"
+    ],
+    "postman.settings.dotenv-detection-notification-visibility": false,
+    "rest-client.rememberCookiesForSubsequentRequests": true,
+    "docwriter.progress.trackFunctions": false,
+    "docwriter.progress.trackMethods": false,
+    "docwriter.progress.trackClasses": true,
+    "docwriter.progress.trackTypes": true,
+    "docwriter.style": "reST"
+}

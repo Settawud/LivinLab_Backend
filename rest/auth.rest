@@ -1,0 +1,104 @@
+@base = http://localhost:4000
+@ts = {{$timestamp}}
+@email = ada.{{ts}}@example.com
+
+### Auth: register user
+POST {{base}}/api/v1/mongo/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "best",
+  "lastName": "best",
+  "email": "best@best.com",
+  "phone": "0801234567",
+  "password": "123456"
+}
+
+### Auth: login user
+# @name login_user
+POST {{base}}/api/v1/mongo/auth/login
+Content-Type: application/json
+
+{
+  "email": "ada.1757649351@example.com",
+  "password": "secret123"
+}
+
+###
+@token = {{login_user.response.body.token}}
+@refresh = {{login_user.response.body.refreshToken}}
+
+### Auth: register admin (requires ADMIN_SIGNUP_SECRET on server)
+POST {{base}}/api/v1/mongo/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Admin",
+  "lastName": "Admin",
+  "email": "admin@example.com",
+  "phone": "0999999999",
+  "password": "123456",
+  "role": "admin",
+  "adminSecret": "a0f05e5f316daf995aff631d4dadb866f24ae230cd72f1a69eef2e660f69efc406318783d9275d5d765e5fb9204d8d5a62ff73ebfce1a84f28f2b7122c125af0"
+}
+
+### Auth: login admin
+# @name login_admin
+POST {{base}}/api/v1/mongo/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "123456"
+}
+
+###
+@adminToken = {{login_admin.response.body.token}}
+@adminRefresh = {{login_admin.response.body.refreshToken}}
+
+### Auth: refresh access token (header method demo)
+POST {{base}}/api/v1/mongo/auth/refresh
+X-Refresh-Token: {{adminRefresh}}
+
+### Auth: logout
+POST {{base}}/api/v1/mongo/auth/logout
+Authorization: Bearer {{token}}
+
+### Auth: logout all sessions
+POST {{base}}/api/v1/mongo/auth/logout-all
+Authorization: Bearer {{token}}
+
+### Auth: forgot password (dev: returns token)
+POST {{base}}/api/v1/mongo/auth/password/forgot
+Content-Type: application/json
+
+{
+  "email": "{{email}}"
+}
+
+### Auth: reset password (replace token)
+POST {{base}}/api/v1/mongo/auth/password/reset
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "token": "REPLACE_WITH_TOKEN",
+  "newPassword": "newSecret123"
+}
+
+### Auth: request verify email (dev: returns token)
+POST {{base}}/api/v1/mongo/auth/verify-email/request
+Content-Type: application/json
+
+{
+  "email": "admin2@example.com"
+}
+
+### Auth: confirm verify email (replace token)
+POST {{base}}/api/v1/mongo/auth/verify-email/confirm
+Content-Type: application/json
+
+{
+  "email": "admin2@example.com",
+  "token": "57e64f68e531546ae4c725f0450420dc"
+}

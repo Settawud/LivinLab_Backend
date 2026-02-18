@@ -1,0 +1,128 @@
+@base = http://localhost:4000
+@ts = {{$timestamp}}
+@email = ada.{{ts}}@example.com
+
+### Login user (adjust email if needed)
+# @name login
+POST {{base}}/api/v1/mongo/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@gmai.com",
+  "password": "secret123"
+}
+
+###
+@token = {{login.response.body.token}}
+
+### Me: get profile
+GET {{base}}/api/v1/mongo/users/me
+Authorization: Bearer {{token}}
+
+### Me: update profile
+PATCH {{base}}/api/v1/mongo/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "firstName": "Ada",
+  "lastName": "Updated",
+  "phone": "0123456789"
+}
+
+### Me: change password
+PATCH {{base}}/api/v1/mongo/users/me/password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "oldPassword": "secret123",
+  "newPassword": "secret456"
+}
+
+### Me: upload/replace profile image (PATCH)
+PATCH {{base}}/api/v1/mongo/users/me/image
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="image"; filename="chair.jpg"
+Content-Type: image/jpeg
+
+< ./chair.jpg
+--WebAppBoundary--
+
+### Me: remove profile image (send no file)
+PATCH {{base}}/api/v1/mongo/users/me/image
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+
+### GET address ทุก address
+### List addresses (current user)
+GET {{base}}/api/v1/mongo/users/me/addresses
+Authorization: Bearer {{token}}
+
+###GET address by addressId โชว์ทีละ1 เลือก default
+### Get address by id
+@addressId = REPLACE_ADDRESS_ID
+GET {{base}}/api/v1/mongo/users/me/addresses/{{addressId}}
+Authorization: Bearer {{token}}
+
+## POST เพิ่ม ADDRESS ทีละ 1 รายการ
+### Create a new address
+POST {{base}}/api/v1/mongo/users/me/addresses
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "buildingNo": "123/45",
+  "detail": "หมู่บ้านตัวอย่าง ซอย 5",
+  "postcode": "10200",
+  "subdistrict": "วัดราชบพิธ",
+  "district": "เขตพระนคร",
+  "province": "REPLACกรุงเทพมหานครE_PROVINCE_ID",
+  "isDefault": true
+}
+
+### PATCH  update addresses by addressId
+### Update address (e.g., set default)
+PATCH {{base}}/api/v1/mongo/users/me/addresses/{{addressId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "subdistrict": "68c524a9e4b8cf823930b503",
+  "district": "68be96f5a658e27624570cd8",
+  "province": "68be96a5a658e27624570c8b"
+}
+
+###DELETE address by addressId
+### Delete address
+DELETE {{base}}/api/v1/mongo/users/me/addresses/{{addressId}}
+Authorization: Bearer {{token}}
+
+### Locations (stubs; return 501)
+@provinceId = REPLACE_PROVINCE_ID
+@districtId = REPLACE_DISTRICT_ID
+@subdistrictId = REPLACE_SUBDISTRICT_ID
+
+GET {{base}}/api/v1/mongo/users/me/address/provinces
+Authorization: Bearer {{token}}
+
+GET {{base}}/api/v1/mongo/users/me/address/province/{{provinceId}}/districts
+Authorization: Bearer {{token}}
+
+GET {{base}}/api/v1/mongo/users/me/address/district/{{districtId}}/subdistricts
+Authorization: Bearer {{token}}
+
+GET {{base}}/api/v1/mongo/users/me/address/subdistrict/{{subdistrictId}}
+Authorization: Bearer {{token}}
+
+
+
+
+
+
+### (Deprecated) delete profile image — use the PATCH remove request above

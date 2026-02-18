@@ -1,0 +1,36 @@
+@base = http://localhost:4000
+@ts = {{$timestamp}}
+
+### Login user
+# @name login
+POST {{base}}/api/v1/mongo/auth/login
+Content-Type: application/json
+
+{
+  "email": "ada.{{ts}}@example.com",
+  "password": "secret123"
+}
+
+###
+@token = {{login.response.body.token}}
+
+### Discounts: list mine
+GET {{base}}/api/v1/mongo/discounts
+Authorization: Bearer {{token}}
+
+### Discounts: create new code for me
+POST {{base}}/api/v1/mongo/discounts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "code": "DEMO{{ts}}",
+  "description": "Test 25%",
+  "type": "percentage",
+  "value": 25,
+  "maxDiscount": 1000,
+  "minOrderAmount": 3000,
+  "usageLimit": 1,
+  "startDate": "{{$datetime iso8601}}",
+  "endDate": "{{$datetime iso8601 2025-12-31T00:00:00Z}}"
+}

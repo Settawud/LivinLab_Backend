@@ -1,0 +1,196 @@
+@base = http://localhost:4000
+@ts = {{$timestamp}}
+
+### Login admin
+# @name login_admin
+POST {{base}}/api/v1/mongo/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin2@example.com",
+  "password": "Admin#123"
+}
+
+###
+@adminToken = {{login_admin.response.body.token}}
+
+### Prepare: create a color (for variant)
+# @name color_create
+POST {{base}}/api/v1/mongo/colors
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name_th": "สีเทา",
+  "name_en": "Gray",
+  "hex": "#888888"
+}
+
+###
+@colorId = {{color_create.response.body.item._id}}
+
+### Products: create
+# @name product_create
+POST {{base}}/api/v1/mongo/products
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "แผ่นรองเมาส์ Ergonomics รุ่น GelMousePad",
+  "description": "แผ่นรองเมาส์ที่มีเจลรองข้อมือในตัว ช่วยให้ข้อมืออยู่ในตำแหน่งที่เหมาะสม ลดอาการปวดเมื่อยจากการใช้เมาส์เป็นเวลานาน พื้นผิวเรียบลื่นรองรับการเคลื่อนไหวของเมาส์ได้อย่างแม่นยำ ฐานเป็นยางกันลื่นยึดติดกับโต๊ะได้ดี",
+  "category": "อุปกรณ์เสริม",
+  "trial": false,
+  "tags": [
+    "แผ่นรองเมาส์",
+    "รองข้อมือ",
+    "เมาส์"]
+    ,
+  "material": "ผ้า Lycra, เจล",
+  "thumbnails": [],
+  "dimension": {
+  "width": 25,
+  "height": 2,
+  "depth": 20,
+  "weight": 0.3
+  },
+   "variants": [
+    {
+      "trial": false,
+      "colorId": "68c3920d4670b96d19e824ff",
+      "price": 299,
+      "quantityInStock": 18
+    }
+   ]
+
+}
+
+###
+@productId = {{product_create.response.body.item._id}}
+@variantId = {{product_create.response.body.item.variants[0]._id}}
+
+### Products: list
+GET {{base}}/api/v1/mongo/products
+
+### Products: get by id
+GET {{base}}/api/v1/mongo/products/{{productId}}
+
+### Products: upload image to product (single file: field name "image")
+@base = http://localhost:4000
+# @name upload_product_images
+POST {{base}}/api/v1/mongo/products/{{productId}}/images
+Authorization: Bearer {{adminToken}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="image"; filename="test1234.png"
+Content-Type: image/png
+
+< ./test1234.png
+--WebAppBoundary--
+
+###
+@productPublicId = {{upload_product_images.response.body.images[0].publicId}}
+
+### Products: upload image to variant (single file: field name "image")
+# @name upload_variant_images
+POST {{base}}/api/v1/mongo/products/{{productId}}/variants/{{variantId}}/images
+Authorization: Bearer {{adminToken}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="image"; filename="test1234.png"
+Content-Type: image/png
+
+< ./test1234.png
+--WebAppBoundary--
+
+###
+@variantPublicId = {{upload_variant_images.response.body.images[0].publicId}}
+
+### Variants: list
+GET {{base}}/api/v1/mongo/products/{{productId}}/variants
+
+### Variants: get one
+GET {{base}}/api/v1/mongo/products/{{productId}}/variants/{{variantId}}
+
+### Variants: upload image again with POST (should 409 Conflict)
+# @name upload_variant_images_conflict
+POST {{base}}/api/v1/mongo/products/{{productId}}/variants/{{variantId}}/images
+Authorization: Bearer {{adminToken}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="image"; filename="C7-Ergonomic-Chair-1.png"
+Content-Type: image/png
+
+< ./C7-Ergonomic-Chair-1.png
+--WebAppBoundary--
+
+### Variants: PUT to replace existing image
+# @name replace_variant_image_put
+PUT {{base}}/api/v1/mongo/products/{{productId}}/variants/{{variantId}}/images
+Authorization: Bearer {{adminToken}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="image"; filename="C7-Ergonomic-Chair-1.png"
+Content-Type: image/png
+
+< ./C7-Ergonomic-Chair-1.png
+--WebAppBoundary--
+
+###
+@variantPublicId2 = {{replace_variant_image_put.response.body.images[0].publicId}}
+@variantUrl2 = {{replace_variant_image_put.response.body.images[0].url}}
+
+### Variants: get one (after replace)
+GET {{base}}/api/v1/mongo/products/{{productId}}/variants/{{variantId}}
+
+### Variants: patch to clear image
+PATCH {{base}}/api/v1/mongo/products/{{productId}}/variants/{{variantId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "image": null
+}
+
+### Variants: get one (after clear)
+GET {{base}}/api/v1/mongo/products/{{productId}}/variants/{{variantId}}
+
+### Variants: patch to set image via JSON
+PATCH {{base}}/api/v1/mongo/products/{{productId}}/variants/{{variantId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "image": { "url": "{{variantUrl2}}", "publicId": "{{variantPublicId2}}" }
+}
+
+### Variants: get one (after set via JSON)
+GET {{base}}/api/v1/mongo/products/{{productId}}/variants/{{variantId}}
+
+### Variants: patch other fields
+PATCH {{base}}/api/v1/mongo/products/{{productId}}/variants/{{variantId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "price": 107700,
+  "quantityInStock": 8
+}
+
+
+### Product images: delete one (query param, no encoding needed)
+DELETE {{base}}/api/v1/mongo/products/{{productId}}/images?publicId={{productPublicId}}
+Authorization: Bearer {{adminToken}}
+
+
+### Variant images: delete one (query param)
+DELETE {{base}}/api/v1/mongo/products/{{productId}}/variants/{{variantId}}/images?publicId={{variantPublicId}}
+Authorization: Bearer {{adminToken}}
+
+### Products: delete (admin)
+DELETE {{base}}/api/v1/mongo/products/{{productId}}
+Authorization: Bearer {{adminToken}}
+

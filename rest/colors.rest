@@ -1,0 +1,45 @@
+@base = http://localhost:4000
+@ts = {{$timestamp}}
+
+### Login admin
+# @name login_admin
+POST {{base}}/api/v1/mongo/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin3@example.com",
+  "password": "Admin#123"
+}
+
+###
+@adminToken = {{login_admin.response.body.token}}
+
+### Colors: create
+# @name colors_create
+POST {{base}}/api/v1/mongo/colors
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name_th": "สีดำ",
+  "name_en": "Black",
+  "hex": "#000000"
+}
+
+###
+@colorId = {{colors_create.response.body.item._id}}
+
+### Colors: list
+GET {{base}}/api/v1/mongo/colors
+
+### Colors: get by id
+GET {{base}}/api/v1/mongo/colors/{{colorId}}
+
+### Colors: patch
+PATCH {{base}}/api/v1/mongo/colors/{{colorId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name_en": "Jet Black"
+}
